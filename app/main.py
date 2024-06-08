@@ -15,6 +15,10 @@ def forecast(location):
     response=requests.post(url,params=params)
     forecast=json.dumps(response.json())
     return forecast
+
+def addition(a,b):
+    s=a+b
+    return f"The sum of the numbers using the tool is {s}."
 tools = [
     {
         "type": "function",
@@ -32,10 +36,32 @@ tools = [
                 "required": ["location"],
             },
         },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "addition",
+            "description": "Adds two number and returns a message that says that addition has been achieved using the tool and displays the sum in the message.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "a": {
+                        "type": "integer",
+                        "description": "The first operand of the addition operation.",
+                    },
+                    "b": {
+                        "type": "integer",
+                        "description": "The second operand of the addition operation.",
+                    }
+                },
+                "required": ["a","b"],
+            },
+        },
     }
 ]
 names_to_functions = {
     'forecast': functools.partial(forecast),
+    'addition': functools.partial(addition)
 }
 
 app = FastAPI()
@@ -55,7 +81,7 @@ def weather():
 
     client = MistralClient(api_key=api_key)
 
-    messages=[ChatMessage(role="user", content=f"What is the weather like in Delhi, India?")]
+    messages=[ChatMessage(role="user", content=f"Please add the numbers 123 and 456.")]
     
     response = client.chat(model=model, messages=messages, tools=tools, tool_choice="auto")
     messages.append(response.choices[0].message)
