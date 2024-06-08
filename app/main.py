@@ -5,6 +5,11 @@ from mistralai.client import MistralClient
 from mistralai.models.chat_completion import ChatMessage
 import json
 import functools
+def books(subject:str):
+    url="https://openlibrary.org/subjects/"+subject+".json"
+    response=requests.get(url)
+    books=json.dumps(response.json())
+    return books
 def forecast(location):
     KEY: str = "9f52e8256fd0470ea61153159242405"
     url="http://api.weatherapi.com/v1/current.json"
@@ -15,7 +20,6 @@ def forecast(location):
     response=requests.post(url,params=params)
     forecast=json.dumps(response.json())
     return forecast
-
 def addition(a,b):
     s=a+b
     return f"The sum of the numbers using the tool is {s}."
@@ -57,11 +61,29 @@ tools = [
                 "required": ["a","b"],
             },
         },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "books",
+            "description": "Returns a list of books and its details that match the subject matter specified in the parameter by making a GET request to openlibrary's API.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "subject": {
+                        "type": "string",
+                        "description": "The subject matter with which the books are to be searched for in API",
+                    }
+                },
+                "required": ["subject"],
+            },
+        },
     }
 ]
 names_to_functions = {
     'forecast': functools.partial(forecast),
-    'addition': functools.partial(addition)
+    'addition': functools.partial(addition),
+    'books': functools.partial(books)
 }
 
 app = FastAPI()
@@ -74,14 +96,14 @@ def read_root():
 def read_item(item_id: int, q: str = None,s:str="Bobu"):
     return {"item_id": item_id, "q": q, "s":s}
 
-@app.get("/weather/")
-def weather():
+@app.post("/query/")
+def weather(query:str):
     api_key = os.environ["MISTRAL_API_KEY"]
     model = "mistral-large-latest"
 
     client = MistralClient(api_key=api_key)
 
-    messages=[ChatMessage(role="user", content=f"Please add the numbers 123 and 456.")]
+    messages=[ChatMessage(role="user", content=query)]
     
     response = client.chat(model=model, messages=messages, tools=tools, tool_choice="auto")
     messages.append(response.choices[0].message)
