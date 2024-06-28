@@ -5,6 +5,16 @@ from mistralai.client import MistralClient
 from mistralai.models.chat_completion import ChatMessage
 import json
 import functools
+def entertainment(method:str):
+    if method not in ["upcoming","now_playing","top_rated","popular"]:
+        print("Invalid method")
+    url="https://api.themoviedb.org/3/movie/"+method+"?language=en-US&page=1"
+    headers={
+        "accept":"application/json",
+        "Authorization":"Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiZGZhODg2ZGExOWJjMzgyMWU1ZTRiYzI3MjJjZTlhNSIsIm5iZiI6MTcxOTU1NzI2OS45Mzc1OTEsInN1YiI6IjY2N2U1YmQ4NTk0MTUxMThhMDMzZmIzNiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.c0XP3KJWkINCKRybxtkQI0HlEUcdVgorKJYl4IRZ7jY"
+    }
+    response=requests.get(url,headers=headers)
+    return response.text
 def books(subject:str):
     url="https://openlibrary.org/subjects/"+subject+".json"
     response=requests.get(url)
@@ -20,9 +30,6 @@ def forecast(location):
     response=requests.post(url,params=params)
     forecast=json.dumps(response.json())
     return forecast
-def addition(a,b):
-    s=a+b
-    return f"The sum of the numbers using the tool is {s}."
 tools = [
     {
         "type": "function",
@@ -44,21 +51,17 @@ tools = [
     {
         "type": "function",
         "function": {
-            "name": "addition",
-            "description": "Adds two number and returns a message that says that addition has been achieved using the tool and displays the sum in the message.",
+            "name": "entertainment",
+            "description": "This function makes a GET request to a movie database API and depending on whether you want to see upcoming, top rated, popular or movies that are currently playing, the site will return a list of such movies along with their vote average, language, release_date, overview, release date and other such details in its response and the function will return the result.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "a": {
-                        "type": "integer",
-                        "description": "The first operand of the addition operation.",
-                    },
-                    "b": {
-                        "type": "integer",
-                        "description": "The second operand of the addition operation.",
+                    "method": {
+                        "type": "string",
+                        "description": "The method by which you want to search. Can only take values 'upcoming','now_playing','top_rated','popular'."
                     }
                 },
-                "required": ["a","b"],
+                "required": ["method"],
             },
         },
     },
@@ -82,7 +85,7 @@ tools = [
 ]
 names_to_functions = {
     'forecast': functools.partial(forecast),
-    'addition': functools.partial(addition),
+    'entertainment': functools.partial(entertainment),
     'books': functools.partial(books)
 }
 
